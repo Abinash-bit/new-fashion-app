@@ -28,6 +28,71 @@ export interface ProductParameters {
     colour?: string
     price_tier?: "budget" | "mid" | "luxury"
   }
+  // Extended features
+  sizeGuide: {
+    measurements: {
+      [key: string]: {
+        chest?: number
+        waist?: number
+        hips?: number
+        inseam?: number
+        length?: number
+        shoulder?: number
+        sleeve?: number
+      }
+    }
+    internationalSizes: {
+      [key: string]: {
+        US?: string
+        UK?: string
+        EU?: string
+        AU?: string
+        JP?: string
+      }
+    }
+    fitGuide: {
+      [key: string]: {
+        fit: "slim" | "regular" | "loose" | "oversized"
+        description: string
+        modelHeight?: number
+        modelSize?: string
+      }
+    }
+  }
+  colorVariants: {
+    [key: string]: {
+      name: string
+      hex: string
+      images: string[]
+      inStock: boolean
+      price?: number
+      swatchImage?: string
+    }
+  }
+  fabricDetails: {
+    composition: {
+      [key: string]: number // e.g., { "cotton": 80, "polyester": 20 }
+    }
+    care: {
+      washing: string[]
+      drying: string[]
+      ironing: string[]
+      dryCleaning: string[]
+    }
+    properties: {
+      stretch: "none" | "slight" | "moderate" | "high"
+      thickness: "light" | "medium" | "heavy"
+      texture: string[]
+      season: ("spring" | "summer" | "fall" | "winter")[]
+    }
+    certifications: string[] // e.g., ["OEKO-TEX", "GOTS"]
+    sustainability: {
+      recycled: boolean
+      organic: boolean
+      fairTrade: boolean
+      ecoFriendly: boolean
+    }
+  }
 }
 
 // Camera/Rendering Parameters Table

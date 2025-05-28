@@ -9,6 +9,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { ModelParameters, ProductParameters, CameraParameters, GenerationRequest } from "@/types/fashion-ai"
+import { SizeGuide } from "@/components/product/SizeGuide"
+import { ColorVariants } from "@/components/product/ColorVariants"
+import { FabricView } from "@/components/product/FabricView"
 
 export default function FashionAIStudio() {
   // State based on the parameter tables
@@ -28,8 +31,111 @@ export default function FashionAIStudio() {
       w_cm: 50,
     },
     metadata: {
+      brand: "FashionAI",
+      material: "Cotton Blend",
+      colour: "Black",
       price_tier: "mid",
     },
+    sizeGuide: {
+      measurements: {
+        "XS": { chest: 86, waist: 66, hips: 91 },
+        "S": { chest: 91, waist: 71, hips: 96 },
+        "M": { chest: 96, waist: 76, hips: 101 },
+        "L": { chest: 101, waist: 81, hips: 106 },
+        "XL": { chest: 106, waist: 86, hips: 111 }
+      },
+      internationalSizes: {
+        "XS": { US: "2", UK: "6", EU: "34", AU: "6", JP: "7" },
+        "S": { US: "4", UK: "8", EU: "36", AU: "8", JP: "9" },
+        "M": { US: "6", UK: "10", EU: "38", AU: "10", JP: "11" },
+        "L": { US: "8", UK: "12", EU: "40", AU: "12", JP: "13" },
+        "XL": { US: "10", UK: "14", EU: "42", AU: "14", JP: "15" }
+      },
+      fitGuide: {
+        "XS": { fit: "slim", description: "Fitted silhouette with a modern cut", modelHeight: 170, modelSize: "XS" },
+        "S": { fit: "slim", description: "Fitted silhouette with a modern cut", modelHeight: 172, modelSize: "S" },
+        "M": { fit: "regular", description: "Classic fit with comfortable ease", modelHeight: 174, modelSize: "M" },
+        "L": { fit: "regular", description: "Classic fit with comfortable ease", modelHeight: 176, modelSize: "L" },
+        "XL": { fit: "loose", description: "Relaxed fit with extra room", modelHeight: 178, modelSize: "XL" }
+      }
+    },
+    colorVariants: {
+      "black": {
+        name: "Classic Black",
+        hex: "#000000",
+        images: [
+          "https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=500&auto=format&fit=crop&q=60",
+          "https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=500&auto=format&fit=crop&q=60"
+        ],
+        inStock: true,
+        price: 99.99,
+        swatchImage: "https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=100&auto=format&fit=crop&q=60"
+      },
+      "navy": {
+        name: "Navy Blue",
+        hex: "#000080",
+        images: [
+          "https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=500&auto=format&fit=crop&q=60",
+          "https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=500&auto=format&fit=crop&q=60"
+        ],
+        inStock: true,
+        price: 99.99,
+        swatchImage: "https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=100&auto=format&fit=crop&q=60"
+      },
+      "red": {
+        name: "Cherry Red",
+        hex: "#FF0000",
+        images: [
+          "https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=500&auto=format&fit=crop&q=60",
+          "https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=500&auto=format&fit=crop&q=60"
+        ],
+        inStock: false,
+        price: 99.99,
+        swatchImage: "https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=100&auto=format&fit=crop&q=60"
+      }
+    },
+    fabricDetails: {
+      composition: {
+        "cotton": 80,
+        "polyester": 15,
+        "spandex": 5
+      },
+      care: {
+        washing: [
+          "Machine wash cold",
+          "Use mild detergent",
+          "Do not bleach",
+          "Wash with similar colors"
+        ],
+        drying: [
+          "Tumble dry low",
+          "Remove promptly",
+          "Do not over-dry"
+        ],
+        ironing: [
+          "Iron on reverse side",
+          "Use low heat",
+          "Steam iron if needed"
+        ],
+        dryCleaning: [
+          "Dry clean only",
+          "Use professional cleaning service"
+        ]
+      },
+      properties: {
+        stretch: "slight",
+        thickness: "medium",
+        texture: ["smooth", "soft", "breathable"],
+        season: ["spring", "summer", "fall"]
+      },
+      certifications: ["OEKO-TEX", "GOTS", "Fair Trade"],
+      sustainability: {
+        recycled: true,
+        organic: true,
+        fairTrade: true,
+        ecoFriendly: true
+      }
+    }
   })
 
   const [cameraParams, setCameraParams] = useState<CameraParameters>({
@@ -44,6 +150,11 @@ export default function FashionAIStudio() {
   const [selectedCategory, setSelectedCategory] = useState("clothes")
   const [lighting, setLighting] = useState([50])
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [selectedSubNav, setSelectedSubNav] = useState("model-tryon")
+
+  // Add new state for the result image
+  const [resultImage, setResultImage] = useState<string | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   // Update model parameters
   const updateModelParam = <K extends keyof ModelParameters>(key: K, value: ModelParameters[K]) => {
@@ -55,15 +166,22 @@ export default function FashionAIStudio() {
     setCameraParams((prev) => ({ ...prev, [key]: value }))
   }
 
-  // Generate try-on request
-  const handleGenerate = () => {
+  // Modify the handleGenerate function
+  const handleGenerate = async () => {
+    setIsGenerating(true)
     const request: Partial<GenerationRequest> = {
       model: modelParams,
       product: productParams as ProductParameters,
       camera: cameraParams,
     }
     console.log("Generation Request:", request)
-    // Here you would send the request to your AI service
+    
+    // Simulate API call with timeout
+    setTimeout(() => {
+      // For demo purposes, we'll use a placeholder image
+      setResultImage("https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=800&auto=format&fit=crop&q=60")
+      setIsGenerating(false)
+    }, 2000)
   }
 
   const categories = [
@@ -88,6 +206,92 @@ export default function FashionAIStudio() {
     { id: "back", icon: Bed, label: "Back" },
     { id: "overhead", icon: Users, label: "Overhead" },
   ]
+
+  // Modify the default case in renderSubNavContent
+  const renderSubNavContent = () => {
+    switch (selectedSubNav) {
+      case "size-guide":
+        return productParams.sizeGuide ? (
+          <SizeGuide sizeGuide={productParams.sizeGuide} />
+        ) : (
+          <div className="text-center p-8">
+            <p className="text-gray-500">No size guide available for this product.</p>
+          </div>
+        )
+      case "color-variants":
+        return productParams.colorVariants ? (
+          <ColorVariants colorVariants={productParams.colorVariants} />
+        ) : (
+          <div className="text-center p-8">
+            <p className="text-gray-500">No color variants available for this product.</p>
+          </div>
+        )
+      case "fabric-view":
+        return productParams.fabricDetails ? (
+          <FabricView fabricDetails={productParams.fabricDetails} />
+        ) : (
+          <div className="text-center p-8">
+            <p className="text-gray-500">No fabric details available for this product.</p>
+          </div>
+        )
+      default:
+        return (
+          <div className="grid grid-cols-2 gap-6">
+            {/* Upload Area */}
+            <Card className="h-[600px] border-2 border-dashed border-gray-300 bg-white">
+              <CardContent className="flex flex-col items-center justify-center h-full space-y-4">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-gray-400" />
+                </div>
+                <div className="text-center">
+                  <p className="text-lg text-gray-600 mb-2">Drag & drop your product image here</p>
+                  <p className="text-gray-400">or</p>
+                </div>
+                <Button variant="outline" className="bg-pink-50 border-pink-200 text-pink-700 hover:bg-pink-100">
+                  Browse Files
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Result Area */}
+            <Card className="h-[600px] bg-white">
+              <CardContent className="flex flex-col items-center justify-center h-full">
+                {isGenerating ? (
+                  <div className="text-center space-y-4">
+                    <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin mx-auto"></div>
+                    <p className="text-gray-600">Generating your try-on...</p>
+                  </div>
+                ) : resultImage ? (
+                  <div className="relative w-full h-full">
+                    <img
+                      src={resultImage}
+                      alt="Try-on result"
+                      className="w-full h-full object-contain"
+                    />
+                    <div className="absolute bottom-4 right-4 flex gap-2">
+                      <Button variant="outline" size="sm" className="bg-white">
+                        Download
+                      </Button>
+                      <Button variant="outline" size="sm" className="bg-white">
+                        Share
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center space-y-4">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                      <User className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-600">Your try-on will appear here</p>
+                    <p className="text-sm text-gray-400">Upload an image and click Generate to see the result</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -143,8 +347,9 @@ export default function FashionAIStudio() {
           {subNavItems.map((item) => (
             <button
               key={item.id}
+              onClick={() => setSelectedSubNav(item.id)}
               className={`py-4 text-sm font-medium border-b-2 transition-colors ${
-                item.active ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"
+                selectedSubNav === item.id ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
             >
               {item.label}
@@ -155,22 +360,9 @@ export default function FashionAIStudio() {
 
       {/* Main Content */}
       <div className="flex flex-1">
-        {/* Upload Area */}
+        {/* Content Area */}
         <div className="flex-1 p-6">
-          <Card className="h-[600px] border-2 border-dashed border-gray-300 bg-white">
-            <CardContent className="flex flex-col items-center justify-center h-full space-y-4">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                <Upload className="w-8 h-8 text-gray-400" />
-              </div>
-              <div className="text-center">
-                <p className="text-lg text-gray-600 mb-2">Drag & drop your product image here</p>
-                <p className="text-gray-400">or</p>
-              </div>
-              <Button variant="outline" className="bg-pink-50 border-pink-200 text-pink-700 hover:bg-pink-100">
-                Browse Files
-              </Button>
-            </CardContent>
-          </Card>
+          {renderSubNavContent()}
         </div>
 
         {/* Settings Panel */}
