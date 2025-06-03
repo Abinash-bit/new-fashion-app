@@ -1,11 +1,12 @@
 // Model Parameters Table
 export interface ModelParameters {
   gender: "female" | "male" | "non_binary"
-  age_range: "teen" | "20-30" | "30-45" | "45-60+"
-  race_ethnicity: string // open list or Fitzpatrick skin type
+  age_range: "teen" | "18-25" | "26-35" | "36-45" | "46-55" | "56-65" | "66+"
+  race_ethnicity: "white" | "black" | "asian" | "latino" | "mixed"
   body_shape: "rectangle" | "pear" | "hourglass" | "inverted_triangle"
   height_cm: number
-  pose: "front" | "¾-front" | "side" | "back" | "overhead"
+  pose: "standing" | "sitting" | "lying down" | "dancing" | "running" | "jumping" | "walking" | "bending" | "twisting" | "stretching" | "flexing" | "posing"
+  garment_type: "clothing" | "jewellery and watches" | "wallet" | "shoes" | "handbags"
   // Optional extras
   tattoos?: string
   hair_length?: string
@@ -97,12 +98,12 @@ export interface ProductParameters {
 
 // Camera/Rendering Parameters Table
 export interface CameraParameters {
-  view_angle: "front" | "side" | "top" | "45deg"
+  view_angle: "front" | "45deg" | "left" | "right" | "back"
   distance_m: number
   focal_length_mm: number
   aperture_f: number
   lighting: "studio_softbox" | "outdoor_sunny" | "indoor_warm" | "flat"
-  background: "white" | "lifestyle" | "transparent"
+  background: "white" | "lifestyle"
 }
 
 // Combined generation request
@@ -110,4 +111,9 @@ export interface GenerationRequest {
   model: ModelParameters
   product: ProductParameters
   camera: CameraParameters
+}
+
+// Garment Type Schema
+export interface GarmentType {
+  garment_type: "clothing" | "jewellery and watches" | "wallet" | "shoes" | "handbags"
 }
