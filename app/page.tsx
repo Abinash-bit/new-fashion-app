@@ -228,23 +228,105 @@ export default function FashionAIStudio() {
     { id: "outfit-match", label: "Outfit Match Preview" }
   ]
 
-  // Update model parameters
+  // Modify the updateModelParam function
   const updateModelParam = <K extends keyof ModelParameters>(key: K, value: ModelParameters[K]) => {
-    setModelParams((prev) => ({ ...prev, [key]: value }))
+    setModelParams(prev => {
+      if (prev[key] === value) return prev;
+      return { ...prev, [key]: value };
+    });
   }
 
-  // Update camera parameters with proper number handling
+  // Modify the updateCameraParam function
   const updateCameraParam = <K extends keyof CameraParameters>(key: K, value: CameraParameters[K]) => {
-    if (typeof value === 'number') {
-      // Ensure we have a valid number
-      const numValue = Number(value);
-      if (!isNaN(numValue)) {
-        setCameraParams((prev) => ({ ...prev, [key]: numValue }));
-      }
-    } else {
-      setCameraParams((prev) => ({ ...prev, [key]: value }));
-    }
+    setCameraParams(prev => {
+      if (prev[key] === value) return prev;
+      return { ...prev, [key]: value };
+    });
   }
+
+  // Modify the clearState function to be more selective
+  const clearState = () => {
+    // Only clear if there's actually something to clear
+    if (uploadedGarmentImage) setUploadedGarmentImage(null);
+    if (uploadedBagImage) setUploadedBagImage(null);
+    if (uploadedWalletImages.length > 0) setUploadedWalletImages([]);
+    if (uploadedJewelryImages.length > 0) setUploadedJewelryImages([]);
+    if (uploadedShoeImages.length > 0) setUploadedShoeImages([]);
+    if (resultImage) setResultImage(null);
+    
+    // Only reset dimensions if they have values
+    if (Object.values(bagDimensions).some(v => v !== "")) {
+      setBagDimensions({
+        length: "",
+        width: "",
+        height: "",
+        depth: ""
+      });
+    }
+    
+    if (Object.values(walletDimensions).some(v => v !== "")) {
+      setWalletDimensions({
+        length: "",
+        width: "",
+        height: "",
+        depth: "",
+        length2: "",
+        width2: "",
+        height2: ""
+      });
+    }
+    
+    if (Object.values(jewelryDimensions).some(v => v !== "")) {
+      setJewelryDimensions({
+        length: "",
+        width: "",
+        height: ""
+      });
+    }
+  };
+
+  // Modify the tab change handlers to be more selective
+  const handleCategoryChange = (categoryId: string) => {
+    if (selectedCategory !== categoryId) {
+      clearState();
+      setSelectedCategory(categoryId);
+    }
+  };
+
+  const handleBagSubNavChange = (subNavId: string) => {
+    if (bagSubNav !== subNavId) {
+      clearState();
+      setBagSubNav(subNavId);
+    }
+  };
+
+  const handleWalletSubNavChange = (subNavId: string) => {
+    if (walletSubNav !== subNavId) {
+      clearState();
+      setWalletSubNav(subNavId);
+    }
+  };
+
+  const handleJewelrySubNavChange = (subNavId: string) => {
+    if (jewelrySubNav !== subNavId) {
+      clearState();
+      setJewelrySubNav(subNavId);
+    }
+  };
+
+  const handleShoeSubNavChange = (subNavId: string) => {
+    if (shoeSubNav !== subNavId) {
+      clearState();
+      setShoeSubNav(subNavId);
+    }
+  };
+
+  const handleClothesTabChange = (tabId: string) => {
+    if (selectedTab !== tabId) {
+      clearState();
+      setSelectedTab(tabId);
+    }
+  };
 
   // Modify the handleGenerate function
   const handleGenerate = async () => {
@@ -671,7 +753,7 @@ export default function FashionAIStudio() {
         onImageGenerated={setResultImage}
         onGarmentImageUpload={setUploadedGarmentImage}
         generatedImage={resultImage}
-        onTabChange={setSelectedTab}
+        onTabChange={handleClothesTabChange}
       />
     )
   }
@@ -2790,7 +2872,7 @@ export default function FashionAIStudio() {
               {bagNavItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setBagSubNav(item.id)}
+                  onClick={() => handleBagSubNavChange(item.id)}
                   className={`py-4 text-sm font-medium border-b-2 transition-colors ${
                     bagSubNav === item.id ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
@@ -2818,7 +2900,7 @@ export default function FashionAIStudio() {
               {walletNavItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setWalletSubNav(item.id)}
+                  onClick={() => handleWalletSubNavChange(item.id)}
                   className={`py-4 text-sm font-medium border-b-2 transition-colors ${
                     walletSubNav === item.id ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
@@ -2846,7 +2928,7 @@ export default function FashionAIStudio() {
               {jewelryNavItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setJewelrySubNav(item.id)}
+                  onClick={() => handleJewelrySubNavChange(item.id)}
                   className={`py-4 text-sm font-medium border-b-2 transition-colors ${
                     jewelrySubNav === item.id ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
@@ -2874,7 +2956,7 @@ export default function FashionAIStudio() {
               {shoeNavItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setShoeSubNav(item.id)}
+                  onClick={() => handleShoeSubNavChange(item.id)}
                   className={`py-4 text-sm font-medium border-b-2 transition-colors ${
                     shoeSubNav === item.id ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
@@ -2971,7 +3053,7 @@ export default function FashionAIStudio() {
           {categories.map((category) => (
             <button
               key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
+              onClick={() => handleCategoryChange(category.id)}
               className={`flex items-center space-x-2 px-4 py-3 rounded-t-lg text-sm font-medium transition-colors ${
                 selectedCategory === category.id
                   ? "bg-pink-100 text-pink-700 border-b-2 border-pink-500"
