@@ -26,6 +26,12 @@ export function ClothingPhotographyTabs({
   const [garmentImage, setGarmentImage] = React.useState<File | null>(null)
   const [isGenerating, setIsGenerating] = React.useState(false)
 
+  // Clear image when tab changes
+  React.useEffect(() => {
+    setGarmentImage(null)
+    setIsGenerating(false)
+  }, [selectedTab])
+
   // Update parent component when tab changes
   React.useEffect(() => {
     onTabChange?.(selectedTab)
