@@ -335,355 +335,355 @@ export default function FashionAIStudio() {
     setIsGenerating(true)
     let formData = new FormData()
 
-    // Check if we're in shoes outfit match section
-    if (selectedCategory === 'shoes' && shoeSubNav === 'outfit-match') {
-      if (!uploadedShoeImages[0]) {
-        console.log('Missing shoe image for outfit match');
-        setIsGenerating(false);
-        return;
-      }
-
-      // Add first image (File object)
-      formData.append('garment_images', uploadedGarmentImage);
-      
-      // Convert second image URL to File object
-      try {
-        const response = await fetch(uploadedShoeImages[0]);
-        const blob = await response.blob();
-        const file = new File([blob], 'second_image.png', { type: blob.type });
-        formData.append('garment_images', file);
-      } catch (error) {
-        console.error('Error converting second image:', error);
-        setIsGenerating(false);
-        return;
-      }
-      
-      // Add model and camera parameters
-      formData.append('camera_lighting_condition', cameraParams.lighting);
-      formData.append('garment_type', modelParams.garment_type);
-      formData.append('camera_focal_length_mm', cameraParams.focal_length_mm.toString());
-      formData.append('model_race_ethnicity', modelParams.race_ethnicity);
-      formData.append('model_age_range', modelParams.age_range);
-      formData.append('model_pose', modelParams.pose);
-      formData.append('camera_background', cameraParams.background);
-      formData.append('camera_view_angle', cameraParams.view_angle);
-      formData.append('model_gender', modelParams.gender);
-      formData.append('camera_aperture_f_number', cameraParams.aperture_f.toString());
-      formData.append('camera_distance_meters', cameraParams.distance_m.toString());
-      formData.append('model_body_shape', modelParams.body_shape);
-
-      try {
-        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/outfit-match', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error:', errorText);
-          throw new Error(`API call failed: ${errorText}`);
-        }
-
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64data = reader.result as string;
-          setResultImage(base64data);
-          setIsGenerating(false);
-        };
-        reader.readAsDataURL(blob);
-      } catch (error) {
-        console.error('Error in outfit match:', error);
-        setIsGenerating(false);
-      }
-      return;
-    }
-
-    // Check if we're in jewelry size comparison section
-    if (selectedCategory === 'jewelry' && jewelrySubNav === 'size-comparison') {
-      if (!jewelryDimensions.length || !jewelryDimensions.width || !jewelryDimensions.height) {
-        console.log('Missing dimensions for size comparison');
-        setIsGenerating(false);
-        return;
-      }
-
-      // Add image and dimensions
-      formData.append('garment_images', uploadedGarmentImage);
-      formData.append('garment_type', modelParams.garment_type);
-      formData.append('product_height', jewelryDimensions.height);
-      formData.append('product_width', jewelryDimensions.width);
-      formData.append('product_length', jewelryDimensions.length);
-
-      try {
-        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/size', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error:', errorText);
-          throw new Error(`API call failed: ${errorText}`);
-        }
-
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64data = reader.result as string;
-          setResultImage(base64data);
-          setIsGenerating(false);
-        };
-        reader.readAsDataURL(blob);
-      } catch (error) {
-        console.error('Error in size comparison:', error);
-        setIsGenerating(false);
-      }
-      return;
-    }
-
-    // Check if we're in jewelry occasion-based styling section
-    if (selectedCategory === 'jewelry' && jewelrySubNav === 'occasion-styling') {
-      formData.append('garment_images', uploadedGarmentImage)
-      
-      // Add model and camera parameters
-      formData.append('camera_lighting_condition', cameraParams.lighting)
-      formData.append('garment_type', 'jewellery and watches')
-      formData.append('camera_focal_length_mm', cameraParams.focal_length_mm.toString())
-      formData.append('model_race_ethnicity', modelParams.race_ethnicity)
-      formData.append('model_age_range', modelParams.age_range)
-      formData.append('model_pose', modelParams.pose)
-      formData.append('camera_background', cameraParams.background)
-      formData.append('camera_view_angle', cameraParams.view_angle)
-      formData.append('model_gender', modelParams.gender)
-      formData.append('camera_aperture_f_number', cameraParams.aperture_f.toString())
-      formData.append('camera_distance_meters', cameraParams.distance_m.toString())
-      formData.append('model_body_shape', modelParams.body_shape)
-
-      try {
-        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/occasion', {
-          method: 'POST',
-          body: formData
-        })
-
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error('API Error:', errorText)
-          throw new Error(`API call failed: ${errorText}`)
-        }
-
-        const blob = await response.blob()
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          const base64data = reader.result as string
-          setResultImage(base64data)
-          setIsGenerating(false)
-        }
-        reader.readAsDataURL(blob)
-      } catch (error) {
-        console.error('Error in occasion-based styling:', error)
-        setIsGenerating(false)
-      }
-      return
-    }
-
-    // Check if we're in outfit-to-jewelry match section
-    if (selectedCategory === 'jewelry' && jewelrySubNav === 'outfit-match') {
-      if (!uploadedJewelryImages[0]) {
-        console.log('Missing jewelry image for outfit match');
-        setIsGenerating(false);
-        return;
-      }
-
-      // Add first image (File object)
-      formData.append('garment_images', uploadedGarmentImage);
-      
-      // Convert second image URL to File object
-      try {
-        const response = await fetch(uploadedJewelryImages[0]);
-        const blob = await response.blob();
-        const file = new File([blob], 'second_image.png', { type: blob.type });
-        formData.append('garment_images', file);
-      } catch (error) {
-        console.error('Error converting second image:', error);
-        setIsGenerating(false);
-        return;
-      }
-      
-      // Add model and camera parameters
-      formData.append('camera_lighting_condition', cameraParams.lighting);
-      formData.append('garment_type', modelParams.garment_type);
-      formData.append('camera_focal_length_mm', cameraParams.focal_length_mm.toString());
-      formData.append('model_race_ethnicity', modelParams.race_ethnicity);
-      formData.append('model_age_range', modelParams.age_range);
-      formData.append('model_pose', modelParams.pose);
-      formData.append('camera_background', cameraParams.background);
-      formData.append('camera_view_angle', cameraParams.view_angle);
-      formData.append('model_gender', modelParams.gender);
-      formData.append('camera_aperture_f_number', cameraParams.aperture_f.toString());
-      formData.append('camera_distance_meters', cameraParams.distance_m.toString());
-      formData.append('model_body_shape', modelParams.body_shape);
-
-      try {
-        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/outfit-match', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error:', errorText);
-          throw new Error(`API call failed: ${errorText}`);
-        }
-
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64data = reader.result as string;
-          setResultImage(base64data);
-          setIsGenerating(false);
-        };
-        reader.readAsDataURL(blob);
-      } catch (error) {
-        console.error('Error in outfit-to-jewelry match:', error);
-        setIsGenerating(false);
-      }
-      return;
-    }
-
-    // Check if we're in cross-category pairing section
-    if (selectedCategory === 'wallets' && walletSubNav === 'cross-category') {
-      if (!uploadedWalletImages[0]) {
-        console.log('Missing wallet image for cross-category pairing');
-        setIsGenerating(false);
-        return;
-      }
-
-      // Add first image (File object)
-      formData.append('garment_images', uploadedGarmentImage);
-      
-      // Convert second image URL to File object
-      try {
-        const response = await fetch(uploadedWalletImages[0]);
-        const blob = await response.blob();
-        const file = new File([blob], 'second_image.png', { type: blob.type });
-        formData.append('garment_images', file);
-      } catch (error) {
-        console.error('Error converting second image:', error);
-        setIsGenerating(false);
-        return;
-      }
-      
-      // Add model and camera parameters
-      formData.append('camera_lighting_condition', cameraParams.lighting);
-      formData.append('garment_type', modelParams.garment_type);
-      formData.append('camera_focal_length_mm', cameraParams.focal_length_mm.toString());
-      formData.append('model_race_ethnicity', modelParams.race_ethnicity);
-      formData.append('model_age_range', modelParams.age_range);
-      formData.append('model_pose', modelParams.pose);
-      formData.append('camera_background', cameraParams.background);
-      formData.append('camera_view_angle', cameraParams.view_angle);
-      formData.append('model_gender', modelParams.gender);
-      formData.append('camera_aperture_f_number', cameraParams.aperture_f.toString());
-      formData.append('camera_distance_meters', cameraParams.distance_m.toString());
-      formData.append('model_body_shape', modelParams.body_shape);
-
-      try {
-        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/outfit-match', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error:', errorText);
-          throw new Error(`API call failed: ${errorText}`);
-        }
-
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64data = reader.result as string;
-          setResultImage(base64data);
-          setIsGenerating(false);
-        };
-        reader.readAsDataURL(blob);
-      } catch (error) {
-        console.error('Error in cross-category pairing:', error);
-        setIsGenerating(false);
-      }
-      return;
-    }
-
-    // Check if we're in wallets occasion-based styling section
-    if (selectedCategory === 'wallets' && walletSubNav === 'occasion-styling') {
-      formData.append('garment_images', uploadedGarmentImage)
-      
-      // Add model and camera parameters
-      formData.append('camera_lighting_condition', cameraParams.lighting)
-      formData.append('garment_type', 'wallet')
-      formData.append('camera_focal_length_mm', cameraParams.focal_length_mm.toString())
-      formData.append('model_race_ethnicity', modelParams.race_ethnicity)
-      formData.append('model_age_range', modelParams.age_range)
-      formData.append('model_pose', modelParams.pose)
-      formData.append('camera_background', cameraParams.background)
-      formData.append('camera_view_angle', cameraParams.view_angle)
-      formData.append('model_gender', modelParams.gender)
-      formData.append('camera_aperture_f_number', cameraParams.aperture_f.toString())
-      formData.append('camera_distance_meters', cameraParams.distance_m.toString())
-      formData.append('model_body_shape', modelParams.body_shape)
-
-      try {
-        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/occasion', {
-          method: 'POST',
-          body: formData
-        })
-
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error('API Error:', errorText)
-          throw new Error(`API call failed: ${errorText}`)
-        }
-
-        const blob = await response.blob()
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          const base64data = reader.result as string
-          setResultImage(base64data)
-          setIsGenerating(false)
-        }
-        reader.readAsDataURL(blob)
-      } catch (error) {
-        console.error('Error in occasion-based styling:', error)
-        setIsGenerating(false)
-      }
-      return
-    }
-
-    // Original try-on API logic for other sections
-    formData.append('garment_images', uploadedGarmentImage)
-
-    // Add other parameters for try-on API
-    const params = {
-      camera_lighting_condition: cameraParams.lighting.toLowerCase(),
-      garment_type: 'clothing',
-      camera_focal_length_mm: cameraParams.focal_length_mm.toString(),
-      model_race_ethnicity: modelParams.race_ethnicity.toLowerCase(),
-      model_age_range: modelParams.age_range,
-      model_pose: modelParams.pose.toLowerCase(),
-      camera_background: cameraParams.background.toLowerCase(),
-      camera_view_angle: cameraParams.view_angle.toLowerCase(),
-      model_gender: modelParams.gender.toLowerCase(),
-      camera_aperture_f_number: cameraParams.aperture_f.toString(),
-      camera_distance_meters: cameraParams.distance_m.toString(),
-      model_body_shape: modelParams.body_shape.toLowerCase()
-    }
-
-    // Add parameters to FormData for try-on API
-    Object.entries(params).forEach(([key, value]) => {
-      formData.append(key, value)
-    })
-
     try {
+      // Check if we're in shoes outfit match section
+      if (selectedCategory === 'shoes' && shoeSubNav === 'outfit-match') {
+        if (!uploadedShoeImages[0]) {
+          console.log('Missing shoe image for outfit match');
+          setIsGenerating(false);
+          return;
+        }
+
+        // Add first image (File object)
+        formData.append('garment_images', uploadedGarmentImage);
+        
+        // Convert second image URL to File object
+        try {
+          const response = await fetch(uploadedShoeImages[0]);
+          const blob = await response.blob();
+          const file = new File([blob], 'second_image.png', { type: blob.type });
+          formData.append('garment_images', file);
+        } catch (error) {
+          console.error('Error converting second image:', error);
+          setIsGenerating(false);
+          return;
+        }
+        
+        // Add model and camera parameters
+        formData.append('camera_lighting_condition', cameraParams.lighting);
+        formData.append('garment_type', modelParams.garment_type);
+        formData.append('camera_focal_length_mm', cameraParams.focal_length_mm.toString());
+        formData.append('model_race_ethnicity', modelParams.race_ethnicity);
+        formData.append('model_age_range', modelParams.age_range);
+        formData.append('model_pose', modelParams.pose);
+        formData.append('camera_background', cameraParams.background);
+        formData.append('camera_view_angle', cameraParams.view_angle);
+        formData.append('model_gender', modelParams.gender);
+        formData.append('camera_aperture_f_number', cameraParams.aperture_f.toString());
+        formData.append('camera_distance_meters', cameraParams.distance_m.toString());
+        formData.append('model_body_shape', modelParams.body_shape);
+
+        try {
+          const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/outfit-match', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', errorText);
+            throw new Error(`API call failed: ${errorText}`);
+          }
+
+          const blob = await response.blob();
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64data = reader.result as string;
+            setResultImage(base64data);
+            setIsGenerating(false);
+          };
+          reader.readAsDataURL(blob);
+        } catch (error) {
+          console.error('Error in outfit match:', error);
+          setIsGenerating(false);
+        }
+        return;
+      }
+
+      // Check if we're in jewelry size comparison section
+      if (selectedCategory === 'jewelry' && jewelrySubNav === 'size-comparison') {
+        if (!jewelryDimensions.length || !jewelryDimensions.width || !jewelryDimensions.height) {
+          console.log('Missing dimensions for size comparison');
+          setIsGenerating(false);
+          return;
+        }
+
+        // Add image and dimensions
+        formData.append('garment_images', uploadedGarmentImage);
+        formData.append('garment_type', modelParams.garment_type);
+        formData.append('product_height', jewelryDimensions.height);
+        formData.append('product_width', jewelryDimensions.width);
+        formData.append('product_length', jewelryDimensions.length);
+
+        try {
+          const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/size', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', errorText);
+            throw new Error(`API call failed: ${errorText}`);
+          }
+
+          const blob = await response.blob();
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64data = reader.result as string;
+            setResultImage(base64data);
+            setIsGenerating(false);
+          };
+          reader.readAsDataURL(blob);
+        } catch (error) {
+          console.error('Error in size comparison:', error);
+          setIsGenerating(false);
+        }
+        return;
+      }
+
+      // Check if we're in jewelry occasion-based styling section
+      if (selectedCategory === 'jewelry' && jewelrySubNav === 'occasion-styling') {
+        formData.append('garment_images', uploadedGarmentImage)
+        
+        // Add model and camera parameters
+        formData.append('camera_lighting_condition', cameraParams.lighting)
+        formData.append('garment_type', 'jewellery and watches')
+        formData.append('camera_focal_length_mm', cameraParams.focal_length_mm.toString())
+        formData.append('model_race_ethnicity', modelParams.race_ethnicity)
+        formData.append('model_age_range', modelParams.age_range)
+        formData.append('model_pose', modelParams.pose)
+        formData.append('camera_background', cameraParams.background)
+        formData.append('camera_view_angle', cameraParams.view_angle)
+        formData.append('model_gender', modelParams.gender)
+        formData.append('camera_aperture_f_number', cameraParams.aperture_f.toString())
+        formData.append('camera_distance_meters', cameraParams.distance_m.toString())
+        formData.append('model_body_shape', modelParams.body_shape)
+
+        try {
+          const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/occasion', {
+            method: 'POST',
+            body: formData
+          })
+
+          if (!response.ok) {
+            const errorText = await response.text()
+            console.error('API Error:', errorText)
+            throw new Error(`API call failed: ${errorText}`)
+          }
+
+          const blob = await response.blob()
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            const base64data = reader.result as string
+            setResultImage(base64data)
+            setIsGenerating(false)
+          }
+          reader.readAsDataURL(blob)
+        } catch (error) {
+          console.error('Error in occasion-based styling:', error)
+          setIsGenerating(false)
+        }
+        return
+      }
+
+      // Check if we're in outfit-to-jewelry match section
+      if (selectedCategory === 'jewelry' && jewelrySubNav === 'outfit-match') {
+        if (!uploadedJewelryImages[0]) {
+          console.log('Missing jewelry image for outfit match');
+          setIsGenerating(false);
+          return;
+        }
+
+        // Add first image (File object)
+        formData.append('garment_images', uploadedGarmentImage);
+        
+        // Convert second image URL to File object
+        try {
+          const response = await fetch(uploadedJewelryImages[0]);
+          const blob = await response.blob();
+          const file = new File([blob], 'second_image.png', { type: blob.type });
+          formData.append('garment_images', file);
+        } catch (error) {
+          console.error('Error converting second image:', error);
+          setIsGenerating(false);
+          return;
+        }
+        
+        // Add model and camera parameters
+        formData.append('camera_lighting_condition', cameraParams.lighting);
+        formData.append('garment_type', modelParams.garment_type);
+        formData.append('camera_focal_length_mm', cameraParams.focal_length_mm.toString());
+        formData.append('model_race_ethnicity', modelParams.race_ethnicity);
+        formData.append('model_age_range', modelParams.age_range);
+        formData.append('model_pose', modelParams.pose);
+        formData.append('camera_background', cameraParams.background);
+        formData.append('camera_view_angle', cameraParams.view_angle);
+        formData.append('model_gender', modelParams.gender);
+        formData.append('camera_aperture_f_number', cameraParams.aperture_f.toString());
+        formData.append('camera_distance_meters', cameraParams.distance_m.toString());
+        formData.append('model_body_shape', modelParams.body_shape);
+
+        try {
+          const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/outfit-match', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', errorText);
+            throw new Error(`API call failed: ${errorText}`);
+          }
+
+          const blob = await response.blob();
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64data = reader.result as string;
+            setResultImage(base64data);
+            setIsGenerating(false);
+          };
+          reader.readAsDataURL(blob);
+        } catch (error) {
+          console.error('Error in outfit-to-jewelry match:', error);
+          setIsGenerating(false);
+        }
+        return;
+      }
+
+      // Check if we're in cross-category pairing section
+      if (selectedCategory === 'wallets' && walletSubNav === 'cross-category') {
+        if (!uploadedWalletImages[0]) {
+          console.log('Missing wallet image for cross-category pairing');
+          setIsGenerating(false);
+          return;
+        }
+
+        // Add first image (File object)
+        formData.append('garment_images', uploadedGarmentImage);
+        
+        // Convert second image URL to File object
+        try {
+          const response = await fetch(uploadedWalletImages[0]);
+          const blob = await response.blob();
+          const file = new File([blob], 'second_image.png', { type: blob.type });
+          formData.append('garment_images', file);
+        } catch (error) {
+          console.error('Error converting second image:', error);
+          setIsGenerating(false);
+          return;
+        }
+        
+        // Add model and camera parameters
+        formData.append('camera_lighting_condition', cameraParams.lighting);
+        formData.append('garment_type', modelParams.garment_type);
+        formData.append('camera_focal_length_mm', cameraParams.focal_length_mm.toString());
+        formData.append('model_race_ethnicity', modelParams.race_ethnicity);
+        formData.append('model_age_range', modelParams.age_range);
+        formData.append('model_pose', modelParams.pose);
+        formData.append('camera_background', cameraParams.background);
+        formData.append('camera_view_angle', cameraParams.view_angle);
+        formData.append('model_gender', modelParams.gender);
+        formData.append('camera_aperture_f_number', cameraParams.aperture_f.toString());
+        formData.append('camera_distance_meters', cameraParams.distance_m.toString());
+        formData.append('model_body_shape', modelParams.body_shape);
+
+        try {
+          const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/outfit-match', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', errorText);
+            throw new Error(`API call failed: ${errorText}`);
+          }
+
+          const blob = await response.blob();
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64data = reader.result as string;
+            setResultImage(base64data);
+            setIsGenerating(false);
+          };
+          reader.readAsDataURL(blob);
+        } catch (error) {
+          console.error('Error in cross-category pairing:', error);
+          setIsGenerating(false);
+        }
+        return;
+      }
+
+      // Check if we're in wallets occasion-based styling section
+      if (selectedCategory === 'wallets' && walletSubNav === 'occasion-styling') {
+        formData.append('garment_images', uploadedGarmentImage)
+        
+        // Add model and camera parameters
+        formData.append('camera_lighting_condition', cameraParams.lighting)
+        formData.append('garment_type', 'wallet')
+        formData.append('camera_focal_length_mm', cameraParams.focal_length_mm.toString())
+        formData.append('model_race_ethnicity', modelParams.race_ethnicity)
+        formData.append('model_age_range', modelParams.age_range)
+        formData.append('model_pose', modelParams.pose)
+        formData.append('camera_background', cameraParams.background)
+        formData.append('camera_view_angle', cameraParams.view_angle)
+        formData.append('model_gender', modelParams.gender)
+        formData.append('camera_aperture_f_number', cameraParams.aperture_f.toString())
+        formData.append('camera_distance_meters', cameraParams.distance_m.toString())
+        formData.append('model_body_shape', modelParams.body_shape)
+
+        try {
+          const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/occasion', {
+            method: 'POST',
+            body: formData
+          })
+
+          if (!response.ok) {
+            const errorText = await response.text()
+            console.error('API Error:', errorText)
+            throw new Error(`API call failed: ${errorText}`)
+          }
+
+          const blob = await response.blob()
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            const base64data = reader.result as string
+            setResultImage(base64data)
+            setIsGenerating(false)
+          }
+          reader.readAsDataURL(blob)
+        } catch (error) {
+          console.error('Error in occasion-based styling:', error)
+          setIsGenerating(false)
+        }
+        return
+      }
+
+      // Original try-on API logic for other sections
+      formData.append('garment_images', uploadedGarmentImage)
+
+      // Add other parameters for try-on API
+      const params = {
+        camera_lighting_condition: cameraParams.lighting.toLowerCase(),
+        garment_type: 'clothing',
+        camera_focal_length_mm: cameraParams.focal_length_mm.toString(),
+        model_race_ethnicity: modelParams.race_ethnicity.toLowerCase(),
+        model_age_range: modelParams.age_range,
+        model_pose: modelParams.pose.toLowerCase(),
+        camera_background: cameraParams.background.toLowerCase(),
+        camera_view_angle: cameraParams.view_angle.toLowerCase(),
+        model_gender: modelParams.gender.toLowerCase(),
+        camera_aperture_f_number: cameraParams.aperture_f.toString(),
+        camera_distance_meters: cameraParams.distance_m.toString(),
+        model_body_shape: modelParams.body_shape.toLowerCase()
+      }
+
+      // Add parameters to FormData for try-on API
+      Object.entries(params).forEach(([key, value]) => {
+        formData.append(key, value)
+      })
+
       let endpoint = 'https://usecase-backend.gennoctua.com/api/v1/tryon'
       let requestFormData = formData
       
@@ -720,12 +720,11 @@ export default function FashionAIStudio() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setResultImage(reader.result as string); // base64 data URL
+        setIsGenerating(false);
       };
       reader.readAsDataURL(imageBlob);
     } catch (error) {
       console.error('Error generating try-on:', error)
-      // Handle error appropriately
-    } finally {
       setIsGenerating(false)
     }
   }
@@ -754,6 +753,7 @@ export default function FashionAIStudio() {
         onGarmentImageUpload={setUploadedGarmentImage}
         generatedImage={resultImage}
         onTabChange={handleClothesTabChange}
+        isGenerating={isGenerating}
       />
     )
   }

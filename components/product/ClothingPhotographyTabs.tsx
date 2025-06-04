@@ -14,28 +14,52 @@ interface ClothingPhotographyTabsProps {
   onGarmentImageUpload?: (file: File) => void
   generatedImage?: string | null
   onTabChange?: (tab: string) => void
+  isGenerating?: boolean
 }
+
+type TabName = 'lifestyle' | 'studio' | 'flatlay' | 'editorial' | 'details'
 
 export function ClothingPhotographyTabs({
   onImageGenerated,
   onGarmentImageUpload,
   generatedImage,
   onTabChange,
+  isGenerating = false,
 }: ClothingPhotographyTabsProps) {
-  const [selectedTab, setSelectedTab] = React.useState("lifestyle")
+  const [selectedTab, setSelectedTab] = React.useState<TabName>("lifestyle")
   const [garmentImage, setGarmentImage] = React.useState<File | null>(null)
-  const [isGenerating, setIsGenerating] = React.useState(false)
+  const [tabLoadingStates, setTabLoadingStates] = React.useState<Record<TabName, boolean>>({
+    lifestyle: false,
+    studio: false,
+    flatlay: false,
+    editorial: false,
+    details: false
+  })
 
   // Clear image when tab changes
   React.useEffect(() => {
     setGarmentImage(null)
-    setIsGenerating(false)
   }, [selectedTab])
 
   // Update parent component when tab changes
   React.useEffect(() => {
     onTabChange?.(selectedTab)
   }, [selectedTab, onTabChange])
+
+  // Update tab loading state when isGenerating changes
+  React.useEffect(() => {
+    if (isGenerating) {
+      setTabLoadingStates(prev => ({
+        ...prev,
+        [selectedTab]: true
+      }))
+    } else {
+      setTabLoadingStates(prev => ({
+        ...prev,
+        [selectedTab]: false
+      }))
+    }
+  }, [isGenerating, selectedTab])
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -110,7 +134,11 @@ export function ClothingPhotographyTabs({
   const handleGenerate = async () => {
     if (!garmentImage) return
 
-    setIsGenerating(true)
+    setTabLoadingStates(prev => ({
+      ...prev,
+      [selectedTab]: true
+    }))
+
     try {
       console.log('Selected tab:', selectedTab)
       
@@ -121,39 +149,6 @@ export function ClothingPhotographyTabs({
         formData.append('garment_images', garmentImage)
 
         const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/mannequin', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!response.ok) {
-          throw new Error('API call failed')
-        }
-
-        const imageBlob = await response.blob()
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          onImageGenerated?.(reader.result as string)
-        }
-        reader.readAsDataURL(imageBlob)
-      } else if (selectedTab === "studio" || selectedTab === "editorial") {
-        console.log('Calling try-on API')
-        // Create FormData for API call
-        const formData = new FormData()
-        formData.append('garment_images', garmentImage)
-        formData.append('camera_lighting_condition', 'indoor_warm')
-        formData.append('garment_type', 'clothing')
-        formData.append('camera_focal_length_mm', '10')
-        formData.append('model_race_ethnicity', 'asian')
-        formData.append('model_age_range', '18-25')
-        formData.append('model_pose', 'standing')
-        formData.append('camera_background', 'lifestyle')
-        formData.append('camera_view_angle', 'front')
-        formData.append('model_gender', 'female')
-        formData.append('camera_aperture_f_number', '10')
-        formData.append('camera_distance_meters', '20')
-        formData.append('model_body_shape', 'pear')
-
-        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/tryon', {
           method: 'POST',
           body: formData,
         })
@@ -190,15 +185,46 @@ export function ClothingPhotographyTabs({
         }
         reader.readAsDataURL(imageBlob)
       } else {
-        // For other tabs, use the existing mock implementation
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        const mockImageUrl = URL.createObjectURL(garmentImage)
-        onImageGenerated?.(mockImageUrl)
+        console.log('Calling try-on API')
+        // Create FormData for API call
+        const formData = new FormData()
+        formData.append('garment_images', garmentImage)
+        formData.append('camera_lighting_condition', 'indoor_warm')
+        formData.append('garment_type', 'clothing')
+        formData.append('camera_focal_length_mm', '10')
+        formData.append('model_race_ethnicity', 'asian')
+        formData.append('model_age_range', '18-25')
+        formData.append('model_pose', 'standing')
+        formData.append('camera_background', 'lifestyle')
+        formData.append('camera_view_angle', 'front')
+        formData.append('model_gender', 'female')
+        formData.append('camera_aperture_f_number', '10')
+        formData.append('camera_distance_meters', '20')
+        formData.append('model_body_shape', 'pear')
+
+        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/tryon', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          throw new Error('API call failed')
+        }
+
+        const imageBlob = await response.blob()
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          onImageGenerated?.(reader.result as string)
+        }
+        reader.readAsDataURL(imageBlob)
       }
     } catch (error) {
       console.error("Error generating image:", error)
     } finally {
-      setIsGenerating(false)
+      setTabLoadingStates(prev => ({
+        ...prev,
+        [selectedTab]: false
+      }))
     }
   }
 
@@ -222,7 +248,7 @@ export function ClothingPhotographyTabs({
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="lifestyle" className="w-full" onValueChange={setSelectedTab}>
+      <Tabs defaultValue="lifestyle" className="w-full" onValueChange={(value) => setSelectedTab(value as TabName)}>
         <TabsList className="grid w-full grid-cols-5 bg-transparent">
           <TabsTrigger value="lifestyle" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Lifestyle Images</TabsTrigger>
           <TabsTrigger value="studio" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Studio & Minimal</TabsTrigger>
@@ -255,7 +281,7 @@ export function ClothingPhotographyTabs({
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Generated Result</h3>
                 <div className="flex flex-col items-center justify-center h-[400px] text-center">
-                  {isGenerating ? (
+                  {tabLoadingStates[selectedTab] ? (
                     <div className="space-y-4">
                       <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin mx-auto"></div>
                       <p className="text-gray-600">Generating image...</p>
