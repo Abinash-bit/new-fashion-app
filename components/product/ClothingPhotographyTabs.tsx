@@ -17,7 +17,7 @@ interface ClothingPhotographyTabsProps {
   isGenerating?: boolean
 }
 
-type TabName = 'lifestyle' | 'studio' | 'flatlay' | 'editorial' | 'details'
+type TabName = 'lifestyle' | 'studio' | 'flatlay' | 'editorial' | 'details' | 'multiview' | 'background-edit'
 
 export function ClothingPhotographyTabs({
   onImageGenerated,
@@ -33,7 +33,21 @@ export function ClothingPhotographyTabs({
     studio: false,
     flatlay: false,
     editorial: false,
-    details: false
+    details: false,
+    multiview: false,
+    'background-edit': false
+  })
+
+  // Add state for background edit parameters
+  const [backgroundEditParams, setBackgroundEditParams] = React.useState({
+    garment_type: "",
+    surface_type: "",
+    camera_view_angle: "",
+    camera_distance_meters: "",
+    camera_focal_length_mm: "",
+    camera_aperture_f_number: "",
+    camera_lighting_condition: "",
+    camera_background: ""
   })
 
   // Clear image when tab changes
@@ -184,6 +198,35 @@ export function ClothingPhotographyTabs({
           onImageGenerated?.(reader.result as string)
         }
         reader.readAsDataURL(imageBlob)
+      } else if (selectedTab === "background-edit") {
+        console.log('Calling background edit API')
+        // Create FormData for background edit API call
+        const formData = new FormData()
+        formData.append('garment_images', garmentImage)
+        formData.append('camera_lighting_condition', 'indoor_warm')
+        formData.append('garment_type', 'clothing')
+        formData.append('camera_focal_length_mm', '10')
+        formData.append('camera_background', 'white')
+        formData.append('surface_type', 'string')
+        formData.append('camera_view_angle', '30')
+        formData.append('camera_aperture_f_number', '10')
+        formData.append('camera_distance_meters', '6')
+
+        const response = await fetch('http://34.55.132.208/api/v1/background_edit', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          throw new Error('API call failed')
+        }
+
+        const imageBlob = await response.blob()
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          onImageGenerated?.(reader.result as string)
+        }
+        reader.readAsDataURL(imageBlob)
       } else {
         console.log('Calling try-on API')
         // Create FormData for API call
@@ -235,6 +278,7 @@ export function ClothingPhotographyTabs({
       case "editorial":
       case "flatlay":
       case "details":
+      case "background-edit":
         return (
           <div className="mb-6">
             <Label className="text-sm font-medium mb-2">Garment Image</Label>
@@ -249,46 +293,165 @@ export function ClothingPhotographyTabs({
   return (
     <div className="space-y-6">
       <Tabs defaultValue="lifestyle" className="w-full" onValueChange={(value) => setSelectedTab(value as TabName)}>
-        <TabsList className="grid w-full grid-cols-5 bg-transparent">
+        <TabsList className="grid w-full grid-cols-7 bg-transparent">
           <TabsTrigger value="lifestyle" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Lifestyle Images</TabsTrigger>
           <TabsTrigger value="studio" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Studio & Minimal</TabsTrigger>
           <TabsTrigger value="flatlay" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Flat Lay & Ghost</TabsTrigger>
           <TabsTrigger value="editorial" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Editorial & Fashion</TabsTrigger>
           <TabsTrigger value="details" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Detail Shots</TabsTrigger>
+          <TabsTrigger value="multiview" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Multiview</TabsTrigger>
+          <TabsTrigger value="background-edit" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Background Edit</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={selectedTab}>
+        {/* Only render the default output box for non-multiview and non-background-edit tabs */}
+        {selectedTab !== 'multiview' && selectedTab !== 'background-edit' && (
+          <TabsContent value={selectedTab}>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Input Section */}
+              <div className="space-y-6">
+                <Card>
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold mb-4">
+                      {selectedTab === "lifestyle" && "Lifestyle Images"}
+                      {selectedTab === "studio" && "Studio & Minimal Shots"}
+                      {selectedTab === "flatlay" && "Flat Lay & Ghost Mannequin"}
+                      {selectedTab === "editorial" && "Editorial & High Fashion"}
+                      {selectedTab === "details" && "Detail Shots"}
+                    </h3>
+                    {renderInputs()}
+                  </CardContent>
+                </Card>
+              </div>
+              {/* Output Section */}
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Generated Result</h3>
+                  <div className="flex flex-col items-center justify-center h-[400px] text-center">
+                    {tabLoadingStates[selectedTab] ? (
+                      <div className="space-y-4">
+                        <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin mx-auto"></div>
+                        <p className="text-gray-600">Generating image...</p>
+                      </div>
+                    ) : generatedImage ? (
+                      <div className="relative w-full h-full">
+                        <img src={generatedImage} alt="Generated result" className="w-full h-full object-contain" />
+                        <div className="absolute bottom-4 right-4 flex gap-2">
+                          <Button variant="outline" size="sm">Download</Button>
+                          <Button variant="outline" size="sm">Share</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                          <span className="text-2xl">📸</span>
+                        </div>
+                        <p className="text-gray-600">Generated image will appear here</p>
+                        <p className="text-sm text-gray-400 mt-2">Upload garment image and adjust parameters to see the result</p>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        )}
+        <TabsContent value="multiview">
           <div className="grid grid-cols-2 gap-6">
             {/* Input Section */}
             <div className="space-y-6">
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">
-                    {selectedTab === "lifestyle" && "Lifestyle Images"}
-                    {selectedTab === "studio" && "Studio & Minimal Shots"}
-                    {selectedTab === "flatlay" && "Flat Lay & Ghost Mannequin"}
-                    {selectedTab === "editorial" && "Editorial & High Fashion"}
-                    {selectedTab === "details" && "Detail Shots"}
-                  </h3>
-                  
-                  {renderInputs()}
+                  <h3 className="text-lg font-semibold mb-4">Multiview</h3>
+                  {/* Garment Image Upload */}
+                  <div className="mb-6">
+                    <Label className="text-sm font-medium mb-2">Garment Image</Label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      {garmentImage ? (
+                        <div className="relative">
+                          <img src={URL.createObjectURL(garmentImage)} alt="Uploaded garment" className="w-full h-48 object-contain" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={() => setGarmentImage(null)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                          <p className="text-sm text-gray-600">Upload garment image for multiview</p>
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={handleImageUpload}
+                              id="clothes-multiview-upload"
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => document.getElementById('clothes-multiview-upload')?.click()}
+                            >
+                              Browse Files
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={async () => {
+                      if (!garmentImage) return;
+                      setTabLoadingStates(prev => ({ ...prev, multiview: true }));
+                      try {
+                        const formData = new FormData();
+                        formData.append('garment_images', garmentImage);
+                        const response = await fetch('http://34.55.132.208/api/v1/multi_view', {
+                          method: 'POST',
+                          body: formData,
+                        });
+                        if (!response.ok) {
+                          const errorText = await response.text();
+                          throw new Error(`API call failed: ${errorText}`);
+                        }
+                        const blob = await response.blob();
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          onImageGenerated?.(reader.result as string);
+                          setTabLoadingStates(prev => ({ ...prev, multiview: false }));
+                        };
+                        reader.onerror = () => {
+                          setTabLoadingStates(prev => ({ ...prev, multiview: false }));
+                        }
+                        reader.readAsDataURL(blob);
+                      } catch (error) {
+                        setTabLoadingStates(prev => ({ ...prev, multiview: false }));
+                      }
+                    }}
+                    disabled={!garmentImage || tabLoadingStates.multiview}
+                    className="w-full mt-4"
+                  >
+                    {tabLoadingStates.multiview ? 'Generating...' : 'Generate Multiview'}
+                  </Button>
                 </CardContent>
               </Card>
             </div>
-
             {/* Output Section */}
             <Card>
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Generated Result</h3>
+                <h3 className="text-lg font-semibold mb-4">Multiview Result</h3>
                 <div className="flex flex-col items-center justify-center h-[400px] text-center">
-                  {tabLoadingStates[selectedTab] ? (
+                  {tabLoadingStates.multiview ? (
                     <div className="space-y-4">
                       <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin mx-auto"></div>
-                      <p className="text-gray-600">Generating image...</p>
+                      <p className="text-gray-600">Generating multiview...</p>
                     </div>
                   ) : generatedImage ? (
                     <div className="relative w-full h-full">
-                      <img src={generatedImage} alt="Generated result" className="w-full h-full object-contain" />
+                      <img src={generatedImage} alt="Multiview result" className="w-full h-full object-contain" />
                       <div className="absolute bottom-4 right-4 flex gap-2">
                         <Button variant="outline" size="sm">Download</Button>
                         <Button variant="outline" size="sm">Share</Button>
@@ -297,10 +460,188 @@ export function ClothingPhotographyTabs({
                   ) : (
                     <>
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                        <span className="text-2xl">📸</span>
+                        <span className="text-2xl">👕</span>
                       </div>
-                      <p className="text-gray-600">Generated image will appear here</p>
-                      <p className="text-sm text-gray-400 mt-2">Upload garment image and adjust parameters to see the result</p>
+                      <p className="text-gray-600">Multiview result will appear here</p>
+                      <p className="text-sm text-gray-400 mt-2">Upload garment image and click Generate Multiview to see result</p>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        <TabsContent value="background-edit">
+          <div className="grid grid-cols-2 gap-6">
+            {/* Input Section */}
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Background Edit</h3>
+                  {/* Garment Image Upload */}
+                  <div className="mb-6">
+                    <Label className="text-sm font-medium mb-2">Garment Image</Label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      {garmentImage ? (
+                        <div className="relative">
+                          <img src={URL.createObjectURL(garmentImage)} alt="Uploaded garment" className="w-full h-48 object-contain" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={() => setGarmentImage(null)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                          <p className="text-sm text-gray-600">Upload garment image for background edit</p>
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={handleImageUpload}
+                              id="clothes-background-edit-upload"
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => document.getElementById('clothes-background-edit-upload')?.click()}
+                            >
+                              Browse Files
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Background Edit Parameters */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium mb-2">Background Edit Parameters</h4>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Garment Type</Label>
+                        <Input
+                          type="text"
+                          value={backgroundEditParams.garment_type}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, garment_type: e.target.value }))}
+                          placeholder="e.g., t-shirt, dress, pants"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Surface Type</Label>
+                        <Input
+                          type="text"
+                          value={backgroundEditParams.surface_type}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, surface_type: e.target.value }))}
+                          placeholder="e.g., cotton, silk, denim"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Camera View Angle</Label>
+                        <Input
+                          type="text"
+                          value={backgroundEditParams.camera_view_angle}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, camera_view_angle: e.target.value }))}
+                          placeholder="e.g., front, side, 45-degree"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Camera Distance (meters)</Label>
+                        <Input
+                          type="number"
+                          value={backgroundEditParams.camera_distance_meters}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, camera_distance_meters: e.target.value }))}
+                          placeholder="e.g., 2.0"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Camera Focal Length (mm)</Label>
+                        <Input
+                          type="number"
+                          value={backgroundEditParams.camera_focal_length_mm}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, camera_focal_length_mm: e.target.value }))}
+                          placeholder="e.g., 50"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Camera Aperture (f-number)</Label>
+                        <Input
+                          type="number"
+                          value={backgroundEditParams.camera_aperture_f_number}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, camera_aperture_f_number: e.target.value }))}
+                          placeholder="e.g., 2.8"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Camera Lighting Condition</Label>
+                        <Input
+                          type="text"
+                          value={backgroundEditParams.camera_lighting_condition}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, camera_lighting_condition: e.target.value }))}
+                          placeholder="e.g., natural, studio, warm"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Camera Background</Label>
+                        <Input
+                          type="text"
+                          value={backgroundEditParams.camera_background}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, camera_background: e.target.value }))}
+                          placeholder="e.g., white, lifestyle, urban"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={!garmentImage || tabLoadingStates['background-edit']}
+                    className="w-full mt-4"
+                  >
+                    {tabLoadingStates['background-edit'] ? 'Generating...' : 'Generate Background Edit'}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+            {/* Output Section */}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Background Edit Result</h3>
+                <div className="flex flex-col items-center justify-center h-[400px] text-center">
+                  {tabLoadingStates['background-edit'] ? (
+                    <div className="space-y-4">
+                      <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin mx-auto"></div>
+                      <p className="text-gray-600">Generating background edit...</p>
+                    </div>
+                  ) : generatedImage ? (
+                    <div className="relative w-full h-full">
+                      <img src={generatedImage} alt="Background edit result" className="w-full h-full object-contain" />
+                      <div className="absolute bottom-4 right-4 flex gap-2">
+                        <Button variant="outline" size="sm">Download</Button>
+                        <Button variant="outline" size="sm">Share</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <span className="text-2xl">🎨</span>
+                      </div>
+                      <p className="text-gray-600">Background edit result will appear here</p>
+                      <p className="text-sm text-gray-400 mt-2">Upload garment image and click Generate Background Edit to see result</p>
                     </>
                   )}
                 </div>
