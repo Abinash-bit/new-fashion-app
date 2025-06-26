@@ -4850,7 +4850,7 @@ export default function FashionAIStudio() {
             <Label className="text-sm font-medium text-gray-700 mb-2">Background</Label>
             <Select
               value={cameraParams.background}
-              onValueChange={(value: "white" | "lifestyle") => 
+              onValueChange={(value: "white" | "lifestyle" | "beach settings" | "cafe environment" | "spring garden" | "winter snow" | "professional settings") => 
                 updateCameraParam("background", value)
               }
             >
@@ -4860,6 +4860,11 @@ export default function FashionAIStudio() {
               <SelectContent>
                 <SelectItem value="white">White</SelectItem>
                 <SelectItem value="lifestyle">Lifestyle</SelectItem>
+                <SelectItem value="beach settings">Beach Settings</SelectItem>
+                <SelectItem value="cafe environment">Cafe Environment</SelectItem>
+                <SelectItem value="spring garden">Spring Garden</SelectItem>
+                <SelectItem value="winter snow">Winter Snow</SelectItem>
+                <SelectItem value="professional settings">Professional Settings</SelectItem>
               </SelectContent>
             </Select>
           </div>

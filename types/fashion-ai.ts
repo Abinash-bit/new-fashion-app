@@ -103,7 +103,7 @@ export interface CameraParameters {
   focal_length_mm: number
   aperture_f: number
   lighting: "studio_softbox" | "outdoor_sunny" | "indoor_warm" | "flat"
-  background: "white" | "lifestyle"
+  background: "white" | "lifestyle" | "beach settings" | "cafe environment" | "spring garden" | "winter snow" | "professional settings"
 }
 
 // Combined generation request
