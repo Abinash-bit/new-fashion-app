@@ -1638,7 +1638,7 @@ export default function FashionAIStudio() {
                         const formData = new FormData();
                         formData.append('garment_images', uploadedGarmentImage);
                 
-                        const response = await fetch('http://34.55.132.208/api/v1/multi_view', {
+                        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/multi_view', {
                           method: 'POST',
                           body: formData,
                         });
@@ -1867,7 +1867,7 @@ export default function FashionAIStudio() {
                         formData.append('camera_aperture_f_number', backgroundEditParams.camera_aperture_f_number || '10');
                         formData.append('camera_distance_meters', backgroundEditParams.camera_distance_meters || '6');
 
-                        const response = await fetch('http://34.55.132.208/api/v1/background_edit', {
+                        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/background_edit', {
                           method: 'POST',
                           body: formData
                         });
@@ -2789,7 +2789,7 @@ export default function FashionAIStudio() {
                         const formData = new FormData();
                         formData.append('garment_images', uploadedGarmentImage);
                 
-                        const response = await fetch('http://34.55.132.208/api/v1/multi_view', {
+                        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/multi_view', {
                           method: 'POST',
                           body: formData,
                         });
@@ -3024,7 +3024,7 @@ export default function FashionAIStudio() {
                         formData.append('camera_aperture_f_number', backgroundEditParams.camera_aperture_f_number || '10');
                         formData.append('camera_distance_meters', backgroundEditParams.camera_distance_meters || '6');
 
-                        const response = await fetch('http://34.55.132.208/api/v1/background_edit', {
+                        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/background_edit', {
                           method: 'POST',
                           body: formData
                         });
@@ -3970,7 +3970,7 @@ export default function FashionAIStudio() {
                       try {
                         const formData = new FormData();
                         formData.append('garment_images', uploadedGarmentImage);
-                        const response = await fetch('http://34.55.132.208/api/v1/multi_view', {
+                        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/multi_view', {
                           method: 'POST',
                           body: formData,
                         });
@@ -4201,7 +4201,7 @@ export default function FashionAIStudio() {
                         formData.append('camera_aperture_f_number', backgroundEditParams.camera_aperture_f_number || '10');
                         formData.append('camera_distance_meters', backgroundEditParams.camera_distance_meters || '6');
 
-                        const response = await fetch('http://34.55.132.208/api/v1/background_edit', {
+                        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/background_edit', {
                           method: 'POST',
                           body: formData
                         });

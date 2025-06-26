@@ -211,7 +211,7 @@ export function ClothingPhotographyTabs({
         formData.append('camera_aperture_f_number', '10')
         formData.append('camera_distance_meters', '6')
 
-        const response = await fetch('http://34.55.132.208/api/v1/background_edit', {
+        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/background_edit', {
           method: 'POST',
           body: formData,
         })
