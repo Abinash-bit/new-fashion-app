@@ -737,6 +737,22 @@ export default function FashionAIStudio() {
         // For detail API, we only need the garment image
         requestFormData = new FormData()
         requestFormData.append('garment_images', uploadedGarmentImage)
+      } else if (selectedCategory === 'clothes' && (selectedTab === 'editorial' || selectedTab === 'high fashion')) {
+        endpoint = 'https://usecase-backend.gennoctua.com/api/v1/editorial';
+        // For editorial API, we only need the garment image and all other params except garment_type
+        requestFormData = new FormData();
+        requestFormData.append('garment_images', uploadedGarmentImage);
+        requestFormData.append('camera_lighting_condition', cameraParams.lighting.toLowerCase());
+        requestFormData.append('camera_focal_length_mm', cameraParams.focal_length_mm.toString());
+        requestFormData.append('model_race_ethnicity', modelParams.race_ethnicity.toLowerCase());
+        requestFormData.append('model_age_range', modelParams.age_range);
+        requestFormData.append('model_pose', modelParams.pose.toLowerCase());
+        requestFormData.append('camera_background', cameraParams.background.toLowerCase());
+        requestFormData.append('camera_view_angle', cameraParams.view_angle.toLowerCase());
+        requestFormData.append('model_gender', modelParams.gender.toLowerCase());
+        requestFormData.append('camera_aperture_f_number', cameraParams.aperture_f.toString());
+        requestFormData.append('camera_distance_meters', cameraParams.distance_m.toString());
+        requestFormData.append('model_body_shape', modelParams.body_shape.toLowerCase());
       }
 
       const response = await fetch(endpoint, {

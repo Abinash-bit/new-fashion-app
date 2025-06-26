@@ -226,6 +226,24 @@ export function ClothingPhotographyTabs({
           onImageGenerated?.(reader.result as string)
         }
         reader.readAsDataURL(imageBlob)
+      } else if (selectedTab === "editorial") {
+        console.log('Calling editorial API')
+        // Editorial tab: ONLY call the editorial endpoint
+        const formData = new FormData()
+        formData.append('garment_images', garmentImage)
+        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/editorial', {
+          method: 'POST',
+          body: formData,
+        })
+        if (!response.ok) {
+          throw new Error('API call failed')
+        }
+        const imageBlob = await response.blob()
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          onImageGenerated?.(reader.result as string)
+        }
+        reader.readAsDataURL(imageBlob)
       } else {
         console.log('Calling try-on API')
         // Create FormData for API call
