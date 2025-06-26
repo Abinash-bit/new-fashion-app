@@ -17,7 +17,7 @@ interface ClothingPhotographyTabsProps {
   isGenerating?: boolean
 }
 
-type TabName = 'lifestyle' | 'studio' | 'flatlay' | 'editorial' | 'details' | 'multiview' | 'background-edit'
+type TabName = 'lifestyle' | 'studio' | 'flatlay' | 'editorial' | 'details' | 'background-edit'
 
 export function ClothingPhotographyTabs({
   onImageGenerated,
@@ -34,7 +34,6 @@ export function ClothingPhotographyTabs({
     flatlay: false,
     editorial: false,
     details: false,
-    multiview: false,
     'background-edit': false
   })
 
@@ -293,18 +292,17 @@ export function ClothingPhotographyTabs({
   return (
     <div className="space-y-6">
       <Tabs defaultValue="lifestyle" className="w-full" onValueChange={(value) => setSelectedTab(value as TabName)}>
-        <TabsList className="grid w-full grid-cols-7 bg-transparent">
+        <TabsList className="grid w-full grid-cols-6 bg-transparent">
           <TabsTrigger value="lifestyle" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Lifestyle Images</TabsTrigger>
           <TabsTrigger value="studio" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Studio & Minimal</TabsTrigger>
           <TabsTrigger value="flatlay" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Flat Lay & Ghost</TabsTrigger>
           <TabsTrigger value="editorial" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Editorial & Fashion</TabsTrigger>
           <TabsTrigger value="details" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Detail Shots</TabsTrigger>
-          <TabsTrigger value="multiview" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Multiview</TabsTrigger>
           <TabsTrigger value="background-edit" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm">Background Edit</TabsTrigger>
         </TabsList>
 
-        {/* Only render the default output box for non-multiview and non-background-edit tabs */}
-        {selectedTab !== 'multiview' && selectedTab !== 'background-edit' && (
+        {/* Only render the default output box for non-background-edit tabs */}
+        {selectedTab !== 'background-edit' && (
           <TabsContent value={selectedTab}>
             <div className="grid grid-cols-2 gap-6">
               {/* Input Section */}
@@ -355,122 +353,6 @@ export function ClothingPhotographyTabs({
             </div>
           </TabsContent>
         )}
-        <TabsContent value="multiview">
-          <div className="grid grid-cols-2 gap-6">
-            {/* Input Section */}
-            <div className="space-y-6">
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Multiview</h3>
-                  {/* Garment Image Upload */}
-                  <div className="mb-6">
-                    <Label className="text-sm font-medium mb-2">Garment Image</Label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                      {garmentImage ? (
-                        <div className="relative">
-                          <img src={URL.createObjectURL(garmentImage)} alt="Uploaded garment" className="w-full h-48 object-contain" />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="absolute top-2 right-2"
-                            onClick={() => setGarmentImage(null)}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                          <p className="text-sm text-gray-600">Upload garment image for multiview</p>
-                          <div className="relative">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                              onChange={handleImageUpload}
-                              id="clothes-multiview-upload"
-                            />
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => document.getElementById('clothes-multiview-upload')?.click()}
-                            >
-                              Browse Files
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={async () => {
-                      if (!garmentImage) return;
-                      setTabLoadingStates(prev => ({ ...prev, multiview: true }));
-                      try {
-                        const formData = new FormData();
-                        formData.append('garment_images', garmentImage);
-                        const response = await fetch('http://34.55.132.208/api/v1/multi_view', {
-                          method: 'POST',
-                          body: formData,
-                        });
-                        if (!response.ok) {
-                          const errorText = await response.text();
-                          throw new Error(`API call failed: ${errorText}`);
-                        }
-                        const blob = await response.blob();
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          onImageGenerated?.(reader.result as string);
-                          setTabLoadingStates(prev => ({ ...prev, multiview: false }));
-                        };
-                        reader.onerror = () => {
-                          setTabLoadingStates(prev => ({ ...prev, multiview: false }));
-                        }
-                        reader.readAsDataURL(blob);
-                      } catch (error) {
-                        setTabLoadingStates(prev => ({ ...prev, multiview: false }));
-                      }
-                    }}
-                    disabled={!garmentImage || tabLoadingStates.multiview}
-                    className="w-full mt-4"
-                  >
-                    {tabLoadingStates.multiview ? 'Generating...' : 'Generate Multiview'}
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-            {/* Output Section */}
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Multiview Result</h3>
-                <div className="flex flex-col items-center justify-center h-[400px] text-center">
-                  {tabLoadingStates.multiview ? (
-                    <div className="space-y-4">
-                      <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin mx-auto"></div>
-                      <p className="text-gray-600">Generating multiview...</p>
-                    </div>
-                  ) : generatedImage ? (
-                    <div className="relative w-full h-full">
-                      <img src={generatedImage} alt="Multiview result" className="w-full h-full object-contain" />
-                      <div className="absolute bottom-4 right-4 flex gap-2">
-                        <Button variant="outline" size="sm">Download</Button>
-                        <Button variant="outline" size="sm">Share</Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                        <span className="text-2xl">👕</span>
-                      </div>
-                      <p className="text-gray-600">Multiview result will appear here</p>
-                      <p className="text-sm text-gray-400 mt-2">Upload garment image and click Generate Multiview to see result</p>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
         <TabsContent value="background-edit">
           <div className="grid grid-cols-2 gap-6">
             {/* Input Section */}

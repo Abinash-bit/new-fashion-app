@@ -210,6 +210,8 @@ export default function FashionAIStudio() {
     camera_background: ""
   })
 
+  // inside bags tab inside model tryon simulation when i am uploading the bag image and in model settings when i click on the generate tryon button  the tryon api is not getting called only that tab is facing problem do not disturb any other tab.
+
   // Bag-specific navigation items
   const bagNavItems = [
     { id: "try-on", label: "Model Try-On Simulation" },
@@ -219,13 +221,17 @@ export default function FashionAIStudio() {
     { id: "outfit-visualization", label: "Outfit & Product Visualization" },
     { id: "multiview", label: "Multiview" },
     { id: "background-edit", label: "Background Edit" },
+    { id: "detail-shots", label: "Detail Shots" },
   ]
 
   // Wallet-specific navigation items
   const walletNavItems = [
     { id: "size-guide", label: "Interactive Size Guide" },
     { id: "cross-category", label: "Cross-Category Pairing" },
-    { id: "occasion-styling", label: "Occasion-Based Styling" }
+    { id: "occasion-styling", label: "Occasion-Based Styling" },
+    { id: "detail-shots", label: "Detail Shots" },
+    { id: "multiview", label: "Multiview" },
+    { id: "background-edit", label: "Background Edit" },
   ]
 
   // Jewelry-specific navigation items
@@ -242,6 +248,7 @@ export default function FashionAIStudio() {
     { id: "outfit-match", label: "Outfit Match Preview" },
     { id: "multiview", label: "Multiview" },
     { id: "background-edit", label: "Background Edit" },
+    { id: "detail-shots", label: "Detail Shots" },
   ]
 
   // Modify the updateModelParam function
@@ -833,16 +840,11 @@ export default function FashionAIStudio() {
                               type="file"
                               accept="image/*"
                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                              onChange={async (e) => {
+                              onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
                                   setUploadedBagImage(URL.createObjectURL(file));
-                                  try {
-                                    const result = await handleFileUpload(file);
-                                    console.log('Upload successful:', result);
-                                  } catch (error) {
-                                    console.error('Upload failed:', error);
-                                  }
+                                  setUploadedGarmentImage(file); // Ensure API works from sidebar button
                                 }
                               }}
                               id="bag-upload"
@@ -1931,6 +1933,141 @@ export default function FashionAIStudio() {
           </div>
         )
 
+      case "detail-shots":
+        return (
+          <div className="grid grid-cols-2 gap-6">
+            {/* Input Section */}
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Detail Shots</h3>
+                  
+                  {/* Bag Image Upload */}
+                  <div className="mb-6">
+                    <Label className="text-sm font-medium mb-2">Bag Image</Label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      {uploadedBagImage ? (
+                        <div className="relative">
+                          <img src={uploadedBagImage} alt="Uploaded bag" className="w-full h-48 object-contain" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={() => setUploadedBagImage(null)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                          <p className="text-sm text-gray-600">Drag & drop your bag image here</p>
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  setUploadedBagImage(URL.createObjectURL(file))
+                                  setUploadedGarmentImage(file)
+                                }
+                              }}
+                              id="bag-detail-shots-upload"
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => document.getElementById('bag-detail-shots-upload')?.click()}
+                            >
+                              Browse Files
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Generate Button */}
+                  <Button 
+                    onClick={async () => {
+                      if (!uploadedGarmentImage) {
+                        console.log('Missing bag image');
+                        return;
+                      }
+
+                      setIsGenerating(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append('garment_images', uploadedGarmentImage);
+
+                        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/detail', {
+                          method: 'POST',
+                          body: formData
+                        });
+
+                        if (!response.ok) {
+                          const errorText = await response.text();
+                          console.error('API Error:', errorText);
+                          throw new Error(`API call failed: ${errorText}`);
+                        }
+
+                        const blob = await response.blob();
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64data = reader.result as string;
+                          setResultImage(base64data);
+                          setIsGenerating(false);
+                        };
+                        reader.readAsDataURL(blob);
+                      } catch (error) {
+                        console.error('Error in detail shots:', error);
+                        setIsGenerating(false);
+                      }
+                    }}
+                    disabled={!uploadedGarmentImage || isGenerating}
+                    className="w-full mt-4"
+                  >
+                    {isGenerating ? 'Generating...' : 'Generate Detail Shots'}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Output Section */}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Detail Shots Result</h3>
+                <div className="flex flex-col items-center justify-center h-[400px] text-center">
+                  {isGenerating ? (
+                    <div className="space-y-4">
+                      <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin mx-auto"></div>
+                      <p className="text-gray-600">Generating detail shots...</p>
+                    </div>
+                  ) : resultImage ? (
+                    <div className="relative w-full h-full">
+                      <img src={resultImage} alt="Detail shots result" className="w-full h-full object-contain" />
+                      <div className="absolute bottom-4 right-4 flex gap-2">
+                        <Button variant="outline" size="sm">Download</Button>
+                        <Button variant="outline" size="sm">Share</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <span className="text-2xl">🔍</span>
+                      </div>
+                      <p className="text-gray-600">Detail shots result will appear here</p>
+                      <p className="text-sm text-gray-400 mt-2">Upload bag image and click Generate Detail Shots to see result</p>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+
       default:
         return null
     }
@@ -2430,6 +2567,521 @@ export default function FashionAIStudio() {
                       </div>
                       <p className="text-gray-600">Styling suggestions will appear here</p>
                       <p className="text-sm text-gray-400 mt-2">Upload wallet image and click Generate Try-On to see suggestions</p>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+
+      case "detail-shots":
+        return (
+          <div className="grid grid-cols-2 gap-6">
+            {/* Input Section */}
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Detail Shots</h3>
+                  
+                  {/* Wallet Image Upload */}
+                  <div className="mb-6">
+                    <Label className="text-sm font-medium mb-2">Wallet Image</Label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      {uploadedWalletImages[0] ? (
+                        <div className="relative">
+                          <img src={uploadedWalletImages[0]} alt="Uploaded wallet" className="w-full h-48 object-contain" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={() => {
+                              const newImages = [...uploadedWalletImages]
+                              newImages[0] = ""
+                              setUploadedWalletImages(newImages)
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                          <p className="text-sm text-gray-600">Drag & drop your wallet image here</p>
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  const newImages = [...uploadedWalletImages]
+                                  newImages[0] = URL.createObjectURL(file)
+                                  setUploadedWalletImages(newImages)
+                                  setUploadedGarmentImage(file)
+                                }
+                              }}
+                              id="wallet-detail-shots-upload"
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => document.getElementById('wallet-detail-shots-upload')?.click()}
+                            >
+                              Browse Files
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Generate Button */}
+                  <Button 
+                    onClick={async () => {
+                      if (!uploadedGarmentImage) {
+                        console.log('Missing wallet image');
+                        return;
+                      }
+
+                      setIsGenerating(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append('garment_images', uploadedGarmentImage);
+
+                        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/detail', {
+                          method: 'POST',
+                          body: formData
+                        });
+
+                        if (!response.ok) {
+                          const errorText = await response.text();
+                          console.error('API Error:', errorText);
+                          throw new Error(`API call failed: ${errorText}`);
+                        }
+
+                        const blob = await response.blob();
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64data = reader.result as string;
+                          setResultImage(base64data);
+                          setIsGenerating(false);
+                        };
+                        reader.readAsDataURL(blob);
+                      } catch (error) {
+                        console.error('Error in detail shots:', error);
+                        setIsGenerating(false);
+                      }
+                    }}
+                    disabled={!uploadedGarmentImage || isGenerating}
+                    className="w-full mt-4"
+                  >
+                    {isGenerating ? 'Generating...' : 'Generate Detail Shots'}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Output Section */}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Detail Shots Result</h3>
+                <div className="flex flex-col items-center justify-center h-[400px] text-center">
+                  {isGenerating ? (
+                    <div className="space-y-4">
+                      <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin mx-auto"></div>
+                      <p className="text-gray-600">Generating detail shots...</p>
+                    </div>
+                  ) : resultImage ? (
+                    <div className="relative w-full h-full">
+                      <img src={resultImage} alt="Detail shots result" className="w-full h-full object-contain" />
+                      <div className="absolute bottom-4 right-4 flex gap-2">
+                        <Button variant="outline" size="sm">Download</Button>
+                        <Button variant="outline" size="sm">Share</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <span className="text-2xl">🔍</span>
+                      </div>
+                      <p className="text-gray-600">Detail shots result will appear here</p>
+                      <p className="text-sm text-gray-400 mt-2">Upload wallet image and click Generate Detail Shots to see result</p>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+
+      case "multiview":
+        return (
+          <div className="grid grid-cols-2 gap-6">
+            {/* Input Section */}
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Multiview</h3>
+                  
+                  {/* Wallet Image Upload */}
+                  <div className="mb-6">
+                    <Label className="text-sm font-medium mb-2">Wallet Image</Label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      {uploadedWalletImages[0] ? (
+                        <div className="relative">
+                          <img src={uploadedWalletImages[0]} alt="Uploaded wallet" className="w-full h-48 object-contain" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={() => {
+                              const newImages = [...uploadedWalletImages]
+                              newImages[0] = ""
+                              setUploadedWalletImages(newImages)
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                          <p className="text-sm text-gray-600">Upload wallet image for multiview</p>
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  const newImages = [...uploadedWalletImages]
+                                  newImages[0] = URL.createObjectURL(file)
+                                  setUploadedWalletImages(newImages)
+                                  setUploadedGarmentImage(file)
+                                }
+                              }}
+                              id="wallet-multiview-upload"
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => document.getElementById('wallet-multiview-upload')?.click()}
+                            >
+                              Browse Files
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Generate Button */}
+                  <Button 
+                    onClick={async () => {
+                      if (!uploadedGarmentImage) {
+                        return;
+                      }
+                      setIsGenerating(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append('garment_images', uploadedGarmentImage);
+                
+                        const response = await fetch('http://34.55.132.208/api/v1/multi_view', {
+                          method: 'POST',
+                          body: formData,
+                        });
+                
+                        if (!response.ok) {
+                          const errorText = await response.text();
+                          throw new Error(`API call failed: ${errorText}`);
+                        }
+                
+                        const blob = await response.blob();
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64data = reader.result as string;
+                          setResultImage(base64data);
+                          setIsGenerating(false);
+                        };
+                        reader.onerror = () => {
+                          console.error("Error reading blob");
+                          setIsGenerating(false);
+                        }
+                        reader.readAsDataURL(blob);
+
+                      } catch (error) {
+                        console.error('Error generating multiview:', error);
+                        setIsGenerating(false);
+                      }
+                    }}
+                    disabled={!uploadedGarmentImage || isGenerating}
+                    className="w-full mt-4"
+                  >
+                    {isGenerating ? 'Generating...' : 'Generate Multiview'}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Output Section */}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Multiview Result</h3>
+                <div className="flex flex-col items-center justify-center h-[400px] text-center">
+                  {isGenerating ? (
+                    <div className="space-y-4">
+                      <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin mx-auto"></div>
+                      <p className="text-gray-600">Generating multiview...</p>
+                    </div>
+                  ) : resultImage ? (
+                    <div className="relative w-full h-full">
+                      <img src={resultImage} alt="Multiview result" className="w-full h-full object-contain" />
+                      <div className="absolute bottom-4 right-4 flex gap-2">
+                        <Button variant="outline" size="sm">Download</Button>
+                        <Button variant="outline" size="sm">Share</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <span className="text-2xl">📸</span>
+                      </div>
+                      <p className="text-gray-600">Multiview result will appear here</p>
+                      <p className="text-sm text-gray-400 mt-2">Upload wallet image and click Generate Multiview to see result</p>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+
+      case "background-edit":
+        return (
+          <div className="grid grid-cols-2 gap-6">
+            {/* Input Section */}
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Background Edit</h3>
+                  
+                  {/* Image Upload */}
+                  <div className="mb-6">
+                    <Label className="text-sm font-medium mb-2">Wallet Image</Label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      {uploadedWalletImages[0] ? (
+                        <div className="relative">
+                          <img src={uploadedWalletImages[0]} alt="Uploaded wallet" className="w-full h-48 object-contain" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={() => {
+                              const newImages = [...uploadedWalletImages]
+                              newImages[0] = ""
+                              setUploadedWalletImages(newImages)
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                          <p className="text-sm text-gray-600">Drag & drop your wallet image here</p>
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  const newImages = [...uploadedWalletImages]
+                                  newImages[0] = URL.createObjectURL(file)
+                                  setUploadedWalletImages(newImages)
+                                  setUploadedGarmentImage(file)
+                                }
+                              }}
+                              id="wallet-background-edit-upload"
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => document.getElementById('wallet-background-edit-upload')?.click()}
+                            >
+                              Browse Files
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Background Edit Parameters */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium mb-2">Background Edit Parameters</h4>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Garment Type</Label>
+                        <Input
+                          type="text"
+                          value={backgroundEditParams.garment_type}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, garment_type: e.target.value }))}
+                          placeholder="e.g., wallet, cardholder"
+                        />
+                      </div>
+                      <div>
+                        <Label>Surface Type</Label>
+                        <Input
+                          type="text"
+                          value={backgroundEditParams.surface_type}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, surface_type: e.target.value }))}
+                          placeholder="e.g., leather, canvas"
+                        />
+                      </div>
+                      <div>
+                        <Label>Camera View Angle</Label>
+                        <Input
+                          type="text"
+                          value={backgroundEditParams.camera_view_angle}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, camera_view_angle: e.target.value }))}
+                          placeholder="e.g., front, side, 45-degree"
+                        />
+                      </div>
+                      <div>
+                        <Label>Camera Distance (meters)</Label>
+                        <Input
+                          type="number"
+                          value={backgroundEditParams.camera_distance_meters}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, camera_distance_meters: e.target.value }))}
+                          placeholder="e.g., 2.0"
+                        />
+                      </div>
+                      <div>
+                        <Label>Camera Focal Length (mm)</Label>
+                        <Input
+                          type="number"
+                          value={backgroundEditParams.camera_focal_length_mm}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, camera_focal_length_mm: e.target.value }))}
+                          placeholder="e.g., 50"
+                        />
+                      </div>
+                      <div>
+                        <Label>Camera Aperture (f-number)</Label>
+                        <Input
+                          type="number"
+                          value={backgroundEditParams.camera_aperture_f_number}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, camera_aperture_f_number: e.target.value }))}
+                          placeholder="e.g., 2.8"
+                        />
+                      </div>
+                      <div>
+                        <Label>Camera Lighting Condition</Label>
+                        <Input
+                          type="text"
+                          value={backgroundEditParams.camera_lighting_condition}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, camera_lighting_condition: e.target.value }))}
+                          placeholder="e.g., natural, studio, warm"
+                        />
+                      </div>
+                      <div>
+                        <Label>Camera Background</Label>
+                        <Input
+                          type="text"
+                          value={backgroundEditParams.camera_background}
+                          onChange={(e) => setBackgroundEditParams(prev => ({ ...prev, camera_background: e.target.value }))}
+                          placeholder="e.g., white, lifestyle, urban"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Generate Button */}
+                  <Button 
+                    onClick={async () => {
+                      if (!uploadedGarmentImage) {
+                        console.log('Missing wallet image');
+                        return;
+                      }
+
+                      setIsGenerating(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append('garment_images', uploadedGarmentImage);
+                        
+                        // Add all background edit parameters with default values if not provided
+                        formData.append('camera_lighting_condition', backgroundEditParams.camera_lighting_condition || 'indoor_warm');
+                        formData.append('garment_type', backgroundEditParams.garment_type || 'wallet');
+                        formData.append('camera_focal_length_mm', backgroundEditParams.camera_focal_length_mm || '10');
+                        formData.append('camera_background', backgroundEditParams.camera_background || 'white');
+                        formData.append('surface_type', backgroundEditParams.surface_type || 'string');
+                        formData.append('camera_view_angle', backgroundEditParams.camera_view_angle || '30');
+                        formData.append('camera_aperture_f_number', backgroundEditParams.camera_aperture_f_number || '10');
+                        formData.append('camera_distance_meters', backgroundEditParams.camera_distance_meters || '6');
+
+                        const response = await fetch('http://34.55.132.208/api/v1/background_edit', {
+                          method: 'POST',
+                          body: formData
+                        });
+
+                        if (!response.ok) {
+                          const errorText = await response.text();
+                          console.error('API Error:', errorText);
+                          throw new Error(`API call failed: ${errorText}`);
+                        }
+
+                        const blob = await response.blob();
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64data = reader.result as string;
+                          setResultImage(base64data);
+                          setIsGenerating(false);
+                        };
+                        reader.readAsDataURL(blob);
+                      } catch (error) {
+                        console.error('Error in background edit:', error);
+                        setIsGenerating(false);
+                      }
+                    }}
+                    disabled={!uploadedGarmentImage || isGenerating}
+                    className="w-full mt-4"
+                  >
+                    {isGenerating ? 'Generating...' : 'Generate Background Edit'}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Output Section */}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Background Edit Result</h3>
+                <div className="flex flex-col items-center justify-center h-[400px] text-center">
+                  {isGenerating ? (
+                    <div className="space-y-4">
+                      <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin mx-auto"></div>
+                      <p className="text-gray-600">Generating background edit...</p>
+                    </div>
+                  ) : resultImage ? (
+                    <div className="relative w-full h-full">
+                      <img src={resultImage} alt="Background edit result" className="w-full h-full object-contain" />
+                      <div className="absolute bottom-4 right-4 flex gap-2">
+                        <Button variant="outline" size="sm">Download</Button>
+                        <Button variant="outline" size="sm">Share</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <span className="text-2xl">🎨</span>
+                      </div>
+                      <p className="text-gray-600">Background edit result will appear here</p>
+                      <p className="text-sm text-gray-400 mt-2">Upload wallet image and adjust parameters to see the result</p>
                     </>
                   )}
                 </div>
@@ -3607,6 +4259,147 @@ export default function FashionAIStudio() {
                       </div>
                       <p className="text-gray-600">Background edit result will appear here</p>
                       <p className="text-sm text-gray-400 mt-2">Upload shoe image and adjust parameters to see the result</p>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
+
+      case "detail-shots":
+        return (
+          <div className="grid grid-cols-2 gap-6">
+            {/* Input Section */}
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Detail Shots</h3>
+                  
+                  {/* Shoe Image Upload */}
+                  <div className="mb-6">
+                    <Label className="text-sm font-medium mb-2">Shoe Image</Label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      {uploadedShoeImages[0] ? (
+                        <div className="relative">
+                          <img src={uploadedShoeImages[0]} alt="Uploaded shoe" className="w-full h-48 object-contain" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={() => {
+                              const newImages = [...uploadedShoeImages]
+                              newImages[0] = ""
+                              setUploadedShoeImages(newImages)
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                          <p className="text-sm text-gray-600">Drag & drop your shoe image here</p>
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  const newImages = [...uploadedShoeImages]
+                                  newImages[0] = URL.createObjectURL(file)
+                                  setUploadedShoeImages(newImages)
+                                  setUploadedGarmentImage(file)
+                                }
+                              }}
+                              id="shoe-detail-upload"
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => document.getElementById('shoe-detail-upload')?.click()}
+                            >
+                              Browse Files
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Generate Button */}
+                  <Button 
+                    onClick={async () => {
+                      if (!uploadedGarmentImage) {
+                        console.log('Missing shoe image');
+                        return;
+                      }
+
+                      setIsGenerating(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append('garment_images', uploadedGarmentImage);
+
+                        const response = await fetch('https://usecase-backend.gennoctua.com/api/v1/detail', {
+                          method: 'POST',
+                          body: formData
+                        });
+
+                        if (!response.ok) {
+                          const errorText = await response.text();
+                          console.error('API Error:', errorText);
+                          throw new Error(`API call failed: ${errorText}`);
+                        }
+
+                        const blob = await response.blob();
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64data = reader.result as string;
+                          setResultImage(base64data);
+                          setIsGenerating(false);
+                        };
+                        reader.readAsDataURL(blob);
+                      } catch (error) {
+                        console.error('Error in detail shots:', error);
+                        setIsGenerating(false);
+                      }
+                    }}
+                    disabled={!uploadedGarmentImage || isGenerating}
+                    className="w-full mt-4"
+                  >
+                    {isGenerating ? 'Generating...' : 'Generate Detail Shots'}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Output Section */}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Detail Shots Result</h3>
+                <div className="flex flex-col items-center justify-center h-[400px] text-center">
+                  {isGenerating ? (
+                    <div className="space-y-4">
+                      <div className="w-16 h-16 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin mx-auto"></div>
+                      <p className="text-gray-600">Generating detail shots...</p>
+                    </div>
+                  ) : resultImage ? (
+                    <div className="relative w-full h-full">
+                      <img src={resultImage} alt="Detail shots result" className="w-full h-full object-contain" />
+                      <div className="absolute bottom-4 right-4 flex gap-2">
+                        <Button variant="outline" size="sm">Download</Button>
+                        <Button variant="outline" size="sm">Share</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <span className="text-2xl">🔍</span>
+                      </div>
+                      <p className="text-gray-600">Detail shots result will appear here</p>
+                      <p className="text-sm text-gray-400 mt-2">Upload shoe image and click Generate Detail Shots to see result</p>
                     </>
                   )}
                 </div>
